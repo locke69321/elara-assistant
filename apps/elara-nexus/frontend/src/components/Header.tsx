@@ -1,8 +1,23 @@
+import { Link } from '@tanstack/react-router'
+
 export default function Header() {
   return (
-    <header className="border-b border-border bg-surface px-4 py-3 shadow-sm sm:px-6">
-      <h1 className="text-xl font-bold text-text-primary">Elara Nexus</h1>
-      <p className="section-subtitle">Core platform dashboard</p>
+    <header className="sticky top-0 z-10 border-b border-border bg-surface shadow-sm">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+        <div>
+          <h1 className="text-xl font-bold text-text-primary leading-tight">Elara Nexus</h1>
+          <p className="section-subtitle">Core platform dashboard</p>
+        </div>
+        <nav aria-label="Primary navigation">
+          <ul className="flex items-center gap-4">
+            <li>
+              <Link to="/" className="text-sm font-medium text-text-secondary hover:text-text-primary">
+                Dashboard
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      </div>
     </header>
   )
 }

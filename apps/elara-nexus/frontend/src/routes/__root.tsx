@@ -23,8 +23,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="bg-bg text-text-primary">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 btn btn-primary">
+          Skip to content
+        </a>
         <Header />
-        <main className="mx-auto max-w-7xl p-4 sm:p-6">{children}</main>
+        <main id="main-content" className="mx-auto max-w-7xl p-4 sm:p-6">{children}</main>
         <Scripts />
       </body>
     </html>
