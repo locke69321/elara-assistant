@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+# Python backend
+backend/.venv/
+
+# Frontend
+frontend/node_modules/
+frontend/.pnpm-home/
+frontend/.turbo/
+frontend/.tanstack/
