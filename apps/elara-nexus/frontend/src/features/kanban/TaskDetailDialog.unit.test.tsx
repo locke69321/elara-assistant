@@ -128,6 +128,18 @@ describe('TaskDetailDialog', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
+  it('closes on Escape key', () => {
+    const client = { updateTask: vi.fn(), moveTask: vi.fn() } as unknown as ApiClient
+    const onClose = vi.fn()
+
+    render(
+      <TaskDetailDialog task={task} board={board} client={client} onClose={onClose} onUpdate={vi.fn()} />,
+    )
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalled()
+  })
+
   it('uses fallback error for non-Error failures', async () => {
     const client = {
       updateTask: vi.fn(() => Promise.reject('bad')),

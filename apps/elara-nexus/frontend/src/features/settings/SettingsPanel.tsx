@@ -20,7 +20,7 @@ export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
     <section className="card">
       <h2 className="section-title">Settings</h2>
       <p className="section-subtitle">Configure API base URL and bearer token.</p>
-      {saved ? <p className="success-message">Settings saved</p> : null}
+      {saved ? <p className="success-message" role="status">Settings saved</p> : null}
 
       <div className="mt-4 grid gap-3">
         <label className="label">

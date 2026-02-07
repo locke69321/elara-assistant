@@ -93,17 +93,19 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
   return (
     <section className="card">
       <h2 className="section-title">Kanban</h2>
-      {error ? <p className="error-message">{error}</p> : null}
+      {error ? <p className="error-message" role="alert">{error}</p> : null}
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <input
           className="input"
+          aria-label="Task title"
           placeholder="Task title"
           value={newTask.title}
           onChange={(event) => setNewTask((prev) => ({ ...prev, title: event.target.value }))}
         />
         <input
           className="input"
+          aria-label="Description"
           placeholder="Description"
           value={newTask.description}
           onChange={(event) => setNewTask((prev) => ({ ...prev, description: event.target.value }))}
