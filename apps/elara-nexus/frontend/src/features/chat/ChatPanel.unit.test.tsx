@@ -138,6 +138,79 @@ describe('ChatPanel', () => {
     })
   })
 
+  it('shows empty state when no messages exist', async () => {
+    const client = {
+      createChatSession: vi.fn(async () => ({
+        id: 's1',
+        title: 'Primary Session',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      })),
+      listChatMessages: vi.fn(async () => []),
+    } as unknown as ApiClient
+
+    render(<ChatPanel client={client} />)
+    await waitFor(() => {
+      expect(screen.getByText('No messages yet')).toBeTruthy()
+    })
+  })
+
+  it('sends message on Enter key press', async () => {
+    const sendChatMessage = vi.fn(async () => ({
+      id: 'm1',
+      sessionId: 's1',
+      role: 'user' as const,
+      content: 'hello',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      run: null,
+    }))
+    const client = {
+      createChatSession: vi.fn(async () => ({
+        id: 's1',
+        title: 'Primary Session',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      })),
+      listChatMessages: vi.fn(async (): Promise<ChatMessage[]> => []),
+      sendChatMessage,
+    } as unknown as ApiClient
+
+    render(<ChatPanel client={client} />)
+    await waitFor(() => {
+      expect(screen.getByText('Chat Runtime')).toBeTruthy()
+    })
+
+    const messageInput = screen.getByPlaceholderText('Message')
+    fireEvent.change(messageInput, { target: { value: 'hello' } })
+    fireEvent.keyDown(messageInput, { key: 'Enter' })
+
+    await waitFor(() => {
+      expect(sendChatMessage).toHaveBeenCalledWith('s1', 'hello')
+    })
+  })
+
+  it('does not send on Shift+Enter', async () => {
+    const sendChatMessage = vi.fn()
+    const client = {
+      createChatSession: vi.fn(async () => ({
+        id: 's1',
+        title: 'Primary Session',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      })),
+      listChatMessages: vi.fn(async () => []),
+      sendChatMessage,
+    } as unknown as ApiClient
+
+    render(<ChatPanel client={client} />)
+    await waitFor(() => {
+      expect(screen.getByText('Chat Runtime')).toBeTruthy()
+    })
+
+    const messageInput = screen.getByPlaceholderText('Message')
+    fireEvent.change(messageInput, { target: { value: 'hello' } })
+    fireEvent.keyDown(messageInput, { key: 'Enter', shiftKey: true })
+
+    expect(sendChatMessage).not.toHaveBeenCalled()
+  })
+
   it('uses fallback error messages for non-Error failures', async () => {
     const initFailureClient = {
       createChatSession: vi.fn(() => Promise.reject('bad')),

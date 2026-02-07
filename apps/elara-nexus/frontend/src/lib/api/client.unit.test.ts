@@ -178,4 +178,17 @@ describe('ApiClient methods', () => {
     await expect(client.listBoards()).rejects.toBeInstanceOf(ApiError)
     await expect(client.listBoards()).rejects.toMatchObject({ status: 400 })
   })
+
+  it('falls back to statusText when response body is empty', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response('', { status: 503, statusText: 'Service Unavailable' }))),
+    )
+    const client = new ApiClient({ baseUrl: 'http://localhost:8000', token: 'token' })
+
+    await expect(client.listBoards()).rejects.toMatchObject({
+      message: 'Service Unavailable',
+      status: 503,
+    })
+  })
 })
