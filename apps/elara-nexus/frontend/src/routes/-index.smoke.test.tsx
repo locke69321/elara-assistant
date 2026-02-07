@@ -13,6 +13,8 @@ describe('route smoke coverage', () => {
   })
 
   it('renders a kanban-first dashboard with side status', async () => {
+    let createdTask = false
+
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url =
         typeof input === 'string'
@@ -38,7 +40,43 @@ describe('route smoke coverage', () => {
         })
       }
       if (url.includes('/api/v1/boards/board-1/tasks') && method === 'GET') {
-        return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } })
+        return new Response(
+          JSON.stringify(
+            createdTask
+              ? [
+                  {
+                    id: 'task-1',
+                    boardId: 'board-1',
+                    columnId: 'c1',
+                    title: 'Composer task',
+                    description: 'from composer',
+                    priority: 'p2',
+                    status: 'todo',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  },
+                ]
+              : [],
+          ),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+      if (url.endsWith('/api/v1/tasks') && method === 'POST') {
+        createdTask = true
+        return new Response(
+          JSON.stringify({
+            id: 'task-1',
+            boardId: 'board-1',
+            columnId: 'c1',
+            title: 'Composer task',
+            description: 'from composer',
+            priority: 'p2',
+            status: 'todo',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
       }
       if (url.includes('/api/v1/boards/board-1') && method === 'GET') {
         return new Response(
@@ -83,6 +121,14 @@ describe('route smoke coverage', () => {
     expect(screen.queryByText('Memory')).toBeNull()
     expect(screen.getByText('Runtime Status')).toBeTruthy()
     expect(screen.getByPlaceholderText('Task title')).toBeTruthy()
+
+    fireEvent.change(screen.getByPlaceholderText('Task title'), { target: { value: 'Composer task' } })
+    fireEvent.change(screen.getByPlaceholderText('Description'), { target: { value: 'from composer' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add Task' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Composer task')).toBeTruthy()
+    })
   })
 
   it('renders settings route and saves config', () => {

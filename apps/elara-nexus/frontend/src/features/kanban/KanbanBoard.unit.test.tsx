@@ -260,4 +260,104 @@ describe('KanbanBoard', () => {
       expect(screen.queryByText('Edit Task')).toBeNull()
     })
   })
+
+  it('maps done tasks into Complete lane', async () => {
+    const client = {
+      listBoards: vi.fn(async () => [{ id: 'b1', name: 'Board' }]),
+      createBoard: vi.fn(async () => ({ id: 'b2', name: 'Board' })),
+      getBoard: vi.fn(async () => ({
+        id: 'b1',
+        name: 'Board',
+        columns: [
+          { id: 'c1', key: 'todo' as const, name: 'Todo', position: 1 },
+          { id: 'c2', key: 'done' as const, name: 'Done', position: 2 },
+        ],
+      })),
+      listTasks: vi.fn(async () => [
+        {
+          id: 't1',
+          boardId: 'b1',
+          columnId: 'c2',
+          title: 'Shipped task',
+          description: '',
+          priority: 'p2' as const,
+          status: 'done' as const,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ]),
+      createTask: vi.fn(async () => {
+        throw new Error('unused')
+      }),
+      moveTask: vi.fn(async () => {
+        throw new Error('unused')
+      }),
+    } as unknown as ApiClient
+
+    render(<KanbanBoard client={client} />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Complete' })).toBeTruthy()
+      expect(screen.getByText('Shipped task')).toBeTruthy()
+    })
+  })
+
+  it('does not move task when selected lane has no mapped backend target', async () => {
+    const moveTask = vi.fn(async () => ({
+      id: 't1',
+      boardId: 'b1',
+      columnId: 'c2',
+      title: 'Initial task',
+      description: 'desc',
+      priority: 'p2' as const,
+      status: 'in_progress' as const,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:01.000Z',
+    }))
+    const client = {
+      listBoards: vi.fn(async () => [{ id: 'b1', name: 'Board' }]),
+      createBoard: vi.fn(async () => ({ id: 'b2', name: 'Board' })),
+      getBoard: vi.fn(async () => ({
+        id: 'b1',
+        name: 'Board',
+        columns: [
+          { id: 'c1', key: 'todo' as const, name: 'Todo', position: 1 },
+          { id: 'c2', key: 'in_progress' as const, name: 'In Progress', position: 2 },
+        ],
+      })),
+      listTasks: vi.fn(async () => [
+        {
+          id: 't1',
+          boardId: 'b1',
+          columnId: 'c1',
+          title: 'Initial task',
+          description: 'desc',
+          priority: 'p2' as const,
+          status: 'todo' as const,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ]),
+      createTask: vi.fn(async () => ({
+        id: 't2',
+        boardId: 'b1',
+        columnId: 'c1',
+        title: 'Added task',
+        description: 'new desc',
+        priority: 'p2' as const,
+        status: 'todo' as const,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      })),
+      moveTask,
+    } as unknown as ApiClient
+
+    render(<KanbanBoard client={client} />)
+    await waitFor(() => {
+      expect(screen.getByText('Initial task')).toBeTruthy()
+    })
+
+    fireEvent.change(screen.getAllByLabelText('Move')[0], { target: { value: 'complete' } })
+    expect(moveTask).not.toHaveBeenCalled()
+  })
 })

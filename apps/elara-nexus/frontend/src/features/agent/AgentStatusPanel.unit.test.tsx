@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { ApiClient } from '@/lib/api/client'
@@ -45,5 +45,63 @@ describe('AgentStatusPanel', () => {
       expect(screen.getByText('planner')).toBeTruthy()
       expect(screen.getByText('research')).toBeTruthy()
     })
+  })
+
+  it('polls backend readiness on interval', async () => {
+    vi.useFakeTimers()
+    try {
+      const getReady = vi.fn(async () => ({ status: 'ready' }))
+      const client = { getReady } as unknown as ApiClient
+
+      render(<AgentStatusPanel client={client} activityState="idle" />)
+
+      await act(async () => {
+        await Promise.resolve()
+      })
+      expect(getReady).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15000)
+      })
+      expect(getReady).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('ignores late readiness result after unmount', async () => {
+    let resolveReady: ((value: { status: string }) => void) | undefined
+    const getReady = vi.fn(
+      () =>
+        new Promise<{ status: string }>((resolve) => {
+          resolveReady = resolve
+        }),
+    )
+    const client = { getReady } as unknown as ApiClient
+
+    const view = render(<AgentStatusPanel client={client} activityState="idle" />)
+    view.unmount()
+    resolveReady?.({ status: 'ready' })
+    await Promise.resolve()
+
+    expect(getReady).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores late readiness error after unmount', async () => {
+    let rejectReady: ((reason: unknown) => void) | undefined
+    const getReady = vi.fn(
+      () =>
+        new Promise<{ status: string }>((_resolve, reject) => {
+          rejectReady = reject
+        }),
+    )
+    const client = { getReady } as unknown as ApiClient
+
+    const view = render(<AgentStatusPanel client={client} activityState="idle" />)
+    view.unmount()
+    rejectReady?.(new Error('offline'))
+    await Promise.resolve()
+
+    expect(getReady).toHaveBeenCalledTimes(1)
   })
 })
