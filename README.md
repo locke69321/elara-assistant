@@ -6,6 +6,8 @@ Minimal monorepo scaffold for an agent platform.
 
 - `backend/` - Python backend managed with `uv`
 - `frontend/` - TypeScript frontend using TanStack Start + Tailwind, managed with `pnpm`
+- `goals/`, `tools/`, `args/`, `context/`, `hardprompts/` - GOTCHA framework layers
+- `memory/`, `data/`, `.tmp/` - local memory, runtime data, and scratch space
 
 ## Quick start
 
@@ -23,4 +25,3 @@ cd frontend
 pnpm install
 pnpm dev
 ```
-

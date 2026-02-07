@@ -10,3 +10,8 @@ frontend/node_modules/
 frontend/.pnpm-home/
 frontend/.turbo/
 frontend/.tanstack/
+frontend/.output/
+
+# Local memory/runtime state
+data/*.db
+memory/logs/*.md
