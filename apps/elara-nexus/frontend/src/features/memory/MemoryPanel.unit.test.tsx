@@ -29,6 +29,7 @@ describe('MemoryPanel', () => {
 
     await waitFor(() => {
       expect(ingestMemory).toHaveBeenCalled()
+      expect(screen.getByText('Document ingested')).toBeTruthy()
     })
 
     fireEvent.change(screen.getByPlaceholderText('Search memory'), { target: { value: 'agent' } })

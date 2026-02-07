@@ -13,6 +13,7 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<MemorySearchResult[]>([])
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [ingesting, setIngesting] = useState(false)
   const [searching, setSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
@@ -24,9 +25,11 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
     setIngesting(true)
     try {
       setError('')
+      setSuccess('')
       await client.ingestMemory({ title: title.trim(), content: content.trim(), sourceRef: 'ui' })
       setTitle('')
       setContent('')
+      setSuccess('Document ingested')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to ingest memory')
     } finally {
@@ -61,6 +64,7 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
     <section className="card">
       <h2 className="section-title">Memory</h2>
       {error ? <p className="error-message">{error}</p> : null}
+      {success ? <p className="success-message">{success}</p> : null}
 
       <div className="mt-4 rounded-lg border border-border-subtle bg-surface-raised p-3">
         <h3 className="text-sm font-semibold text-text-primary mb-3">Ingest Document</h3>
