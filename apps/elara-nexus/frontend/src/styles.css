@@ -30,6 +30,7 @@
 
   --color-warning: #d97706;
   --color-warning-subtle: #fffbeb;
+  --color-warning-text: #92400e;
 
   --color-interactive: #0f172a;
   --color-interactive-hover: #1e293b;
@@ -219,7 +220,7 @@ body {
   .priority-p3 { background-color: var(--color-text-muted); }
 
   .priority-label-p0 { color: var(--color-danger-text); }
-  .priority-label-p1 { color: var(--color-warning); }
+  .priority-label-p1 { color: var(--color-warning-text); }
   .priority-label-p2 { color: var(--color-accent); }
-  .priority-label-p3 { color: var(--color-text-muted); }
+  .priority-label-p3 { color: var(--color-text-secondary); }
 }
