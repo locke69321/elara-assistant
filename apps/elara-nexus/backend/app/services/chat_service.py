@@ -24,6 +24,16 @@ class ChatService:
             "createdAt": session.created_at.isoformat(),
         }
 
+    def list_sessions(self) -> list[ChatSessionData]:
+        return [
+            {
+                "id": session.id,
+                "title": session.title,
+                "createdAt": session.created_at.isoformat(),
+            }
+            for session in self.repo.list_chat_sessions()
+        ]
+
     def add_message(self, session_id: str, role: str, content: str) -> ChatMessageData:
         message = self.repo.add_chat_message(session_id=session_id, role=role, content=content)
 

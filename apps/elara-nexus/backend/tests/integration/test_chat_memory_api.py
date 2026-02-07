@@ -4,9 +4,18 @@ from fastapi.testclient import TestClient
 
 @pytest.mark.integration
 def test_chat_flow(client: TestClient, auth_headers: dict[str, str]) -> None:
+    list_empty = client.get("/api/v1/chat/sessions", headers=auth_headers)
+    assert list_empty.status_code == 200
+    assert list_empty.json() == []
+
     create = client.post("/api/v1/chat/sessions", json={"title": "Plan"}, headers=auth_headers)
     assert create.status_code == 200
     session = create.json()
+
+    list_sessions = client.get("/api/v1/chat/sessions", headers=auth_headers)
+    assert list_sessions.status_code == 200
+    assert len(list_sessions.json()) == 1
+    assert list_sessions.json()[0]["id"] == session["id"]
 
     send = client.post(
         f"/api/v1/chat/sessions/{session['id']}/messages",

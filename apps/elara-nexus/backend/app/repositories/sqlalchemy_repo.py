@@ -172,6 +172,10 @@ class SqlAlchemyRepository:
         self.session.refresh(session)
         return session
 
+    def list_chat_sessions(self) -> list[ChatSession]:
+        stmt = select(ChatSession).order_by(ChatSession.created_at.desc())
+        return list(self.session.scalars(stmt).all())
+
     def add_chat_message(self, session_id: str, role: str, content: str) -> ChatMessage:
         message = ChatMessage(session_id=session_id, role=role, content=content)
         self.session.add(message)

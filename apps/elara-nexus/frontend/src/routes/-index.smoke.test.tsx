@@ -181,6 +181,12 @@ describe('route smoke coverage', () => {
           headers: { 'Content-Type': 'application/json' },
         })
       }
+      if (url.endsWith('/api/v1/chat/sessions') && method === 'GET') {
+        return new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
       if (url.endsWith('/api/v1/chat/sessions') && method === 'POST') {
         return new Response(JSON.stringify({ id: 'session-1', title: 'Primary Session', createdAt: new Date().toISOString() }), {
           status: 200,

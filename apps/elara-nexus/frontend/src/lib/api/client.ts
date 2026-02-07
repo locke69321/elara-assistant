@@ -120,6 +120,10 @@ export class ApiClient {
     })
   }
 
+  listChatSessions(): Promise<ChatSession[]> {
+    return this.request('/api/v1/chat/sessions')
+  }
+
   sendChatMessage(sessionId: string, content: string): Promise<ChatMessage> {
     return this.request(`/api/v1/chat/sessions/${sessionId}/messages`, {
       method: 'POST',

@@ -211,6 +211,24 @@ def create_chat_session(
     )
 
 
+@router.get("/chat/sessions", response_model=list[ChatSessionResponse])
+def list_chat_sessions(
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> list[ChatSessionResponse]:
+    repo = SqlAlchemyRepository(session)
+    service = ChatService(repo, LiteLlmClient(settings), LangfuseTracer(settings))
+    sessions = service.list_sessions()
+    return [
+        ChatSessionResponse(
+            id=item["id"],
+            title=item["title"],
+            createdAt=parse_iso(item["createdAt"]),
+        )
+        for item in sessions
+    ]
+
+
 @router.post("/chat/sessions/{session_id}/messages", response_model=ChatMessageResponse)
 def add_chat_message(
     session_id: str,
