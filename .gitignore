@@ -9,6 +9,8 @@ apps/elara-nexus/backend/.pytest_cache/
 apps/elara-nexus/backend/.ruff_cache/
 apps/elara-nexus/backend/.coverage
 apps/elara-nexus/backend/coverage.json
+apps/elara-nexus/backend/data/
+apps/elara-nexus/backend/*.db
 
 # Frontend
 apps/elara-nexus/frontend/node_modules/
