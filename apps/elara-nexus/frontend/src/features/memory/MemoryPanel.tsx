@@ -101,7 +101,7 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
 
       <div className="mt-4 rounded-lg border border-border-subtle bg-surface-raised p-3">
         <h3 className="text-sm font-semibold text-text-primary mb-3">Search Memory</h3>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <input
             className="input flex-1"
             aria-label="Search memory"

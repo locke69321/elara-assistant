@@ -80,6 +80,7 @@ body {
   font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text-primary);
+  overflow-x: hidden;
 }
 
 /* ─── Shared Component Styles ─── */
@@ -254,7 +255,13 @@ body {
     max-width: 32rem;
     max-height: 90vh;
     overflow-y: auto;
-    padding: var(--spacing-6);
+    padding: var(--spacing-4);
+  }
+
+  @media (min-width: 640px) {
+    .dialog-panel {
+      padding: var(--spacing-6);
+    }
   }
 
   .dialog-title {

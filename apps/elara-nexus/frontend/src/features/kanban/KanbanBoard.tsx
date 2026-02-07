@@ -131,7 +131,7 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 overflow-x-auto" style={{ gridTemplateColumns: `repeat(${board?.columns.length ?? 3}, minmax(200px, 1fr))` }}>
+      <div className="mt-4 grid gap-3 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0" style={{ gridTemplateColumns: `repeat(${board?.columns.length ?? 3}, minmax(180px, 1fr))` }}>
         {board?.columns.map((column) => (
           <article key={column.id} className="rounded-lg border border-border-subtle bg-surface-raised p-3 min-w-0">
             <header className="mb-3 flex items-center justify-between border-b border-border-subtle pb-2">
