@@ -222,4 +222,43 @@ body {
   .priority-label-p1 { color: var(--color-warning); }
   .priority-label-p2 { color: var(--color-accent); }
   .priority-label-p3 { color: var(--color-text-muted); }
+
+  /* Dialog / modal */
+  .dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgb(0 0 0 / 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: var(--spacing-4);
+  }
+
+  .dialog-panel {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 32rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: var(--spacing-6);
+  }
+
+  .dialog-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-4);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--color-border-subtle);
+  }
 }

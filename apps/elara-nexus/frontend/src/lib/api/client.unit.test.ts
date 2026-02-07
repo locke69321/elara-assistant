@@ -50,6 +50,24 @@ describe('ApiClient methods', () => {
           ),
         )
       }
+      if (url.endsWith('/api/v1/tasks/t1') && method === 'PATCH') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: 't1',
+              boardId: 'b1',
+              columnId: 'c1',
+              title: 'updated',
+              description: '',
+              priority: 'p1',
+              status: 'todo',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:01.000Z',
+            }),
+            { status: 200 },
+          ),
+        )
+      }
       if (url.endsWith('/api/v1/tasks/t1/move')) {
         return Promise.resolve(
           new Response(
@@ -137,6 +155,7 @@ describe('ApiClient methods', () => {
       priority: 'p2',
       status: 'todo',
     })
+    await client.updateTask('t1', { title: 'updated', priority: 'p1' })
     await client.moveTask('t1', { columnId: 'c2', status: 'in_progress' })
     await client.taskHistory('t1')
     await client.createChatSession('Chat')

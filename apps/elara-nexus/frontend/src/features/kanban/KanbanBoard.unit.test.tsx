@@ -202,4 +202,26 @@ describe('KanbanBoard', () => {
       expect(screen.getByText('create failed')).toBeTruthy()
     })
   })
+
+  it('opens task detail dialog on task title click and closes on cancel', async () => {
+    const { client } = buildClientMock()
+    render(<KanbanBoard client={client} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Initial task')).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByText('Initial task'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Task')).toBeTruthy()
+      expect(screen.getByDisplayValue('Initial task')).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByText('Cancel'))
+
+    await waitFor(() => {
+      expect(screen.queryByText('Edit Task')).toBeNull()
+    })
+  })
 })
