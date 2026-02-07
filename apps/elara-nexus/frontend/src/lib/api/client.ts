@@ -3,6 +3,7 @@ import type {
   BoardDetail,
   ChatMessage,
   ChatSession,
+  HealthStatus,
   MemoryDocument,
   MemoryDocumentDetail,
   MemorySearchResult,
@@ -55,6 +56,10 @@ export class ApiClient {
 
   getMe(): Promise<{ id: string; email: string; name: string }> {
     return this.request('/api/v1/me')
+  }
+
+  getReady(): Promise<HealthStatus> {
+    return this.request('/api/v1/ready')
   }
 
   listBoards(): Promise<Board[]> {

@@ -2,21 +2,31 @@ import { Link } from '@tanstack/react-router'
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-surface shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+    <header className="site-header">
+      <div className="site-header__inner">
         <div>
-          <h1 className="text-xl font-bold text-text-primary leading-tight">Elara Nexus</h1>
-          <p className="section-subtitle">Core platform dashboard</p>
+          <h1 className="brand-mark">Elara Nexus</h1>
+          <p className="brand-subtitle">Agent Command Surface</p>
         </div>
-        <nav aria-label="Primary navigation">
-          <ul className="flex items-center gap-4">
-            <li>
-              <Link to="/" className="text-sm font-medium text-text-secondary hover:text-text-primary">
-                Dashboard
-              </Link>
-            </li>
-          </ul>
-        </nav>
+        <div className="header-row">
+          <span className="status-pill status-pill--live">Dark mode</span>
+          <nav aria-label="Primary navigation" className="primary-nav">
+            <ul className="header-row">
+              <li>
+                <Link to="/">Dashboard</Link>
+              </li>
+              <li>
+                <Link to="/chat">Chat</Link>
+              </li>
+              <li>
+                <Link to="/memory">Memory</Link>
+              </li>
+              <li>
+                <Link to="/settings">Settings</Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
       </div>
     </header>
   )

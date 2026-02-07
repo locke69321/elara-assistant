@@ -13,6 +13,10 @@ export interface Board {
   name: string
 }
 
+export interface HealthStatus {
+  status: string
+}
+
 export interface Column {
   id: string
   key: TaskStatus

@@ -6,15 +6,29 @@ import { TaskDetailDialog } from './TaskDetailDialog'
 
 interface KanbanBoardProps {
   client: ApiClient
+  showTaskComposer?: boolean
+  refreshNonce?: number
 }
 
-const statusByColumnKey: Record<string, TaskStatus> = {
-  backlog: 'backlog',
-  todo: 'todo',
-  in_progress: 'in_progress',
-  blocked: 'blocked',
-  review: 'review',
-  done: 'done',
+type KanbanLaneId = 'backlog' | 'in_progress' | 'complete'
+const laneIds: KanbanLaneId[] = ['backlog', 'in_progress', 'complete']
+
+const laneLabels: Record<KanbanLaneId, string> = {
+  backlog: 'Backlog',
+  in_progress: 'In Progress',
+  complete: 'Complete',
+}
+
+const laneStatusGroups: Record<KanbanLaneId, TaskStatus[]> = {
+  backlog: ['backlog', 'todo'],
+  in_progress: ['in_progress', 'blocked', 'review'],
+  complete: ['done'],
+}
+
+const lanePreferredColumns: Record<KanbanLaneId, TaskStatus[]> = {
+  backlog: ['todo', 'backlog'],
+  in_progress: ['in_progress', 'blocked', 'review'],
+  complete: ['done'],
 }
 
 const priorityLabels: Record<TaskPriority, string> = {
@@ -24,7 +38,33 @@ const priorityLabels: Record<TaskPriority, string> = {
   p3: 'Low',
 }
 
-export function KanbanBoard({ client }: KanbanBoardProps) {
+function statusToLane(status: TaskStatus): KanbanLaneId {
+  if (laneStatusGroups.complete.includes(status)) {
+    return 'complete'
+  }
+  if (laneStatusGroups.in_progress.includes(status)) {
+    return 'in_progress'
+  }
+  return 'backlog'
+}
+
+function resolveTargetForLane(board: BoardDetail, lane: KanbanLaneId): { columnId: string; status: TaskStatus } | null {
+  const targetStatus = lanePreferredColumns[lane].find((key) => board.columns.some((column) => column.key === key))
+  if (!targetStatus) {
+    return null
+  }
+  const targetColumn = board.columns.find((column) => column.key === targetStatus)
+  if (!targetColumn) {
+    return null
+  }
+  return { columnId: targetColumn.id, status: targetStatus }
+}
+
+function isKanbanLane(value: string): value is KanbanLaneId {
+  return laneIds.includes(value as KanbanLaneId)
+}
+
+export function KanbanBoard({ client, showTaskComposer = true, refreshNonce = 0 }: KanbanBoardProps) {
   const [board, setBoard] = useState<BoardDetail | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'p2' as TaskPriority })
@@ -45,13 +85,17 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
         setError(err instanceof Error ? err.message : 'Failed to load board')
       }
     })()
-  }, [client])
+  }, [client, refreshNonce])
 
-  const tasksByColumn = useMemo(() => {
-    const map = new Map<string, Task[]>()
+  const tasksByLane = useMemo(() => {
+    const map = new Map<KanbanLaneId, Task[]>()
+    for (const lane of laneIds) {
+      map.set(lane, [])
+    }
     for (const task of tasks) {
-      const existing = map.get(task.columnId) ?? []
-      map.set(task.columnId, [...existing, task])
+      const lane = statusToLane(task.status)
+      const existing = map.get(lane) ?? []
+      map.set(lane, [...existing, task])
     }
     return map
   }, [tasks])
@@ -60,19 +104,19 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
     if (!board) {
       return
     }
-    const todoColumn = board.columns.find((column) => column.key === 'todo')
-    if (!todoColumn || !newTask.title.trim()) {
+    const target = resolveTargetForLane(board, 'backlog')
+    if (!target || !newTask.title.trim()) {
       return
     }
 
     try {
       const created = await client.createTask({
         boardId: board.id,
-        columnId: todoColumn.id,
+        columnId: target.columnId,
         title: newTask.title.trim(),
         description: newTask.description.trim(),
         priority: newTask.priority,
-        status: 'todo',
+        status: target.status,
       })
       setTasks((prev) => [...prev, created])
       setNewTask({ title: '', description: '', priority: 'p2' })
@@ -91,56 +135,64 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
   }
 
   return (
-    <section className="card">
-      <h2 className="section-title">Kanban</h2>
+    <section className="card" data-animate="rise">
+      <div className="card-header">
+        <div>
+          <p className="panel-kicker">Execution</p>
+          <h2 className="section-title">Kanban</h2>
+        </div>
+        <span className="badge">{tasks.length} total</span>
+      </div>
       {error ? <p className="error-message" role="alert">{error}</p> : null}
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <input
-          className="input"
-          aria-label="Task title"
-          placeholder="Task title"
-          value={newTask.title}
-          onChange={(event) => setNewTask((prev) => ({ ...prev, title: event.target.value }))}
-        />
-        <input
-          className="input"
-          aria-label="Description"
-          placeholder="Description"
-          value={newTask.description}
-          onChange={(event) => setNewTask((prev) => ({ ...prev, description: event.target.value }))}
-        />
-        <select
-          className="input"
-          value={newTask.priority}
-          aria-label="Priority"
-          onChange={(event) => setNewTask((prev) => ({ ...prev, priority: event.target.value as TaskPriority }))}
-        >
-          {(Object.keys(priorityLabels) as TaskPriority[]).map((key) => (
-            <option key={key} value={key}>{priorityLabels[key]}</option>
-          ))}
-        </select>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => {
-            void addTask()
-          }}
-        >
-          Add Task
-        </button>
-      </div>
+      {showTaskComposer ? (
+        <div className="mt-4 grid gap-2 lg:grid-cols-4">
+          <input
+            className="input"
+            aria-label="Task title"
+            placeholder="Task title"
+            value={newTask.title}
+            onChange={(event) => setNewTask((prev) => ({ ...prev, title: event.target.value }))}
+          />
+          <input
+            className="input"
+            aria-label="Description"
+            placeholder="Description"
+            value={newTask.description}
+            onChange={(event) => setNewTask((prev) => ({ ...prev, description: event.target.value }))}
+          />
+          <select
+            className="input"
+            value={newTask.priority}
+            aria-label="Priority"
+            onChange={(event) => setNewTask((prev) => ({ ...prev, priority: event.target.value as TaskPriority }))}
+          >
+            {(Object.keys(priorityLabels) as TaskPriority[]).map((key) => (
+              <option key={key} value={key}>{priorityLabels[key]}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              void addTask()
+            }}
+          >
+            Add Task
+          </button>
+        </div>
+      ) : null}
 
-      <div className="mt-4 grid gap-3 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0" style={{ gridTemplateColumns: `repeat(${board?.columns.length ?? 3}, minmax(180px, 1fr))` }}>
-        {board?.columns.map((column) => (
-          <article key={column.id} className="rounded-lg border border-border-subtle bg-surface-raised p-3 min-w-0">
+      <div className="kanban-grid mt-4" style={{ gridTemplateColumns: 'repeat(3, minmax(220px, 1fr))' }}>
+        {laneIds.map((laneId) => (
+          <article key={laneId} className="column-card">
             <header className="mb-3 flex items-center justify-between border-b border-border-subtle pb-2">
-              <h3 className="text-sm font-semibold text-text-primary">{column.name}</h3>
-              <span className="badge">{tasksByColumn.get(column.id)?.length ?? 0}</span>
+              <h3 className="text-sm font-semibold text-text-primary">{laneLabels[laneId]}</h3>
+              <span className="badge">{tasksByLane.get(laneId)?.length ?? 0}</span>
             </header>
             <ul className="space-y-2">
-              {(tasksByColumn.get(column.id) ?? []).map((task) => (
-                <li key={task.id} className="rounded-md border border-border-subtle bg-surface p-3 shadow-sm">
+              {(tasksByLane.get(laneId) ?? []).map((task) => (
+                <li key={task.id} className="task-card">
                   <div className="flex items-start gap-2">
                     <span className={`priority-dot mt-1.5 priority-${task.priority}`} title={priorityLabels[task.priority]} />
                     <div className="min-w-0 flex-1">
@@ -167,20 +219,25 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
                       <select
                         id={`status-${task.id}`}
                         className="input px-1 py-0.5 text-xs"
-                        value={task.status}
+                        value={statusToLane(task.status)}
                         onChange={(event) => {
-                          const nextStatus = event.target.value as TaskStatus
-                          const targetColumn = board.columns.find((item) => item.key === nextStatus)
-                          const mappedStatus = statusByColumnKey[nextStatus]
-                          if (!targetColumn || !mappedStatus) {
+                          if (!board) {
                             return
                           }
-                          void moveTask(task.id, targetColumn.id, mappedStatus)
+                          const nextLane = event.target.value
+                          if (!isKanbanLane(nextLane)) {
+                            return
+                          }
+                          const target = resolveTargetForLane(board, nextLane)
+                          if (!target) {
+                            return
+                          }
+                          void moveTask(task.id, target.columnId, target.status)
                         }}
                       >
-                        {board.columns.map((item) => (
-                          <option key={item.id} value={item.key}>
-                            {item.name}
+                        {laneIds.map((lane) => (
+                          <option key={lane} value={lane}>
+                            {laneLabels[lane]}
                           </option>
                         ))}
                       </select>
