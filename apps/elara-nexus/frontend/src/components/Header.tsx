@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router'
+
 export default function Header() {
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-surface shadow-sm">
@@ -9,9 +11,9 @@ export default function Header() {
         <nav aria-label="Primary navigation">
           <ul className="flex items-center gap-4">
             <li>
-              <a href="/" className="text-sm font-medium text-text-secondary hover:text-text-primary">
+              <Link to="/" className="text-sm font-medium text-text-secondary hover:text-text-primary">
                 Dashboard
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>
