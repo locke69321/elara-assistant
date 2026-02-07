@@ -13,11 +13,15 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<MemorySearchResult[]>([])
   const [error, setError] = useState('')
+  const [ingesting, setIngesting] = useState(false)
+  const [searching, setSearching] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
 
   const ingest = async () => {
     if (!title.trim() || !content.trim()) {
       return
     }
+    setIngesting(true)
     try {
       setError('')
       await client.ingestMemory({ title: title.trim(), content: content.trim(), sourceRef: 'ui' })
@@ -25,6 +29,8 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
       setContent('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to ingest memory')
+    } finally {
+      setIngesting(false)
     }
   }
 
@@ -32,11 +38,22 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
     if (!query.trim()) {
       return
     }
+    setSearching(true)
     try {
       setError('')
       setResults(await client.searchMemory(query.trim(), 5))
+      setHasSearched(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to search memory')
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      void search()
     }
   }
 
@@ -45,58 +62,78 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
       <h2 className="section-title">Memory</h2>
       {error ? <p className="error-message">{error}</p> : null}
 
-      <div className="mt-3 grid gap-2">
-        <input
-          className="input"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="Document title"
-        />
-        <textarea
-          className="input"
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          placeholder="Document content"
-          rows={3}
-        />
-        <button
-          type="button"
-          className="btn btn-primary w-fit"
-          onClick={() => {
-            void ingest()
-          }}
-        >
-          Ingest Document
-        </button>
+      <div className="mt-4 rounded-lg border border-border-subtle bg-surface-raised p-3">
+        <h3 className="text-sm font-semibold text-text-primary mb-3">Ingest Document</h3>
+        <div className="grid gap-2">
+          <input
+            className="input"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Document title"
+            disabled={ingesting}
+          />
+          <textarea
+            className="input"
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="Document content"
+            rows={3}
+            disabled={ingesting}
+          />
+          <button
+            type="button"
+            className="btn btn-primary w-fit"
+            disabled={ingesting}
+            onClick={() => {
+              void ingest()
+            }}
+          >
+            Ingest Document
+          </button>
+        </div>
       </div>
 
-      <div className="mt-4 flex gap-2">
-        <input
-          className="input flex-1"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search memory"
-        />
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => {
-            void search()
-          }}
-        >
-          Search
-        </button>
-      </div>
+      <div className="mt-4 rounded-lg border border-border-subtle bg-surface-raised p-3">
+        <h3 className="text-sm font-semibold text-text-primary mb-3">Search Memory</h3>
+        <div className="flex gap-2">
+          <input
+            className="input flex-1"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="Search memory"
+            disabled={searching}
+          />
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={searching}
+            onClick={() => {
+              void search()
+            }}
+          >
+            Search
+          </button>
+        </div>
 
-      <ul className="mt-3 space-y-2">
-        {results.map((result) => (
-          <li key={result.chunkId} className="rounded-md border border-border-subtle bg-surface-raised p-2 text-sm">
-            <p className="font-medium text-text-primary">score: {result.score.toFixed(3)}</p>
-            <p className="text-text-secondary">{result.snippet}</p>
-            <p className="text-xs text-text-muted">{result.sourceRef || 'source: n/a'}</p>
-          </li>
-        ))}
-      </ul>
+        {hasSearched && results.length === 0 ? (
+          <p className="mt-3 text-center text-sm text-text-muted">No results found</p>
+        ) : null}
+
+        {results.length > 0 ? (
+          <ul className="mt-3 space-y-2">
+            {results.map((result) => (
+              <li key={result.chunkId} className="rounded-md border border-border-subtle bg-surface p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="flex-1 text-sm text-text-primary">{result.snippet}</p>
+                  <span className="badge shrink-0">{Math.round(result.score * 100)}%</span>
+                </div>
+                <p className="mt-1 text-xs text-text-muted">{result.sourceRef || 'source: n/a'}</p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
     </section>
   )
 }

@@ -25,7 +25,7 @@ describe('MemoryPanel', () => {
     fireEvent.change(screen.getByPlaceholderText('Document content'), {
       target: { value: 'agent platform' },
     })
-    fireEvent.click(screen.getByText('Ingest Document'))
+    fireEvent.click(screen.getByRole('button', { name: 'Ingest Document' }))
 
     await waitFor(() => {
       expect(ingestMemory).toHaveBeenCalled()
@@ -37,6 +37,7 @@ describe('MemoryPanel', () => {
     await waitFor(() => {
       expect(searchMemory).toHaveBeenCalledWith('agent', 5)
       expect(screen.getByText('agent platform')).toBeTruthy()
+      expect(screen.getByText('99%')).toBeTruthy()
       expect(screen.getByText('source: n/a')).toBeTruthy()
     })
   })
@@ -70,14 +71,14 @@ describe('MemoryPanel', () => {
 
     render(<MemoryPanel client={client} />)
 
-    fireEvent.click(screen.getByText('Ingest Document'))
+    fireEvent.click(screen.getByRole('button', { name: 'Ingest Document' }))
     expect(ingestMemory).not.toHaveBeenCalled()
 
     fireEvent.change(screen.getByPlaceholderText('Document title'), { target: { value: 'Spec' } })
     fireEvent.change(screen.getByPlaceholderText('Document content'), {
       target: { value: 'content' },
     })
-    fireEvent.click(screen.getByText('Ingest Document'))
+    fireEvent.click(screen.getByRole('button', { name: 'Ingest Document' }))
 
     await waitFor(() => {
       expect(screen.getByText('bad')).toBeTruthy()
@@ -117,7 +118,7 @@ describe('MemoryPanel', () => {
     fireEvent.change(screen.getByPlaceholderText('Document content'), {
       target: { value: 'content' },
     })
-    fireEvent.click(screen.getByText('Ingest Document'))
+    fireEvent.click(screen.getByRole('button', { name: 'Ingest Document' }))
 
     await waitFor(() => {
       expect(screen.getByText('Failed to ingest memory')).toBeTruthy()
@@ -127,6 +128,51 @@ describe('MemoryPanel', () => {
     fireEvent.click(screen.getByText('Search'))
     await waitFor(() => {
       expect(screen.getByText('Failed to search memory')).toBeTruthy()
+    })
+  })
+
+  it('shows empty results state after search', async () => {
+    const client = {
+      ingestMemory: vi.fn(async () => ({ id: 'd1', title: 'Spec', chunkCount: 1 })),
+      searchMemory: vi.fn(async () => []),
+    } as unknown as ApiClient
+
+    render(<MemoryPanel client={client} />)
+    fireEvent.change(screen.getByPlaceholderText('Search memory'), { target: { value: 'nothing' } })
+    fireEvent.click(screen.getByText('Search'))
+
+    await waitFor(() => {
+      expect(screen.getByText('No results found')).toBeTruthy()
+    })
+  })
+
+  it('searches on Enter key press', async () => {
+    const searchMemory = vi.fn(async () => [
+      {
+        chunkId: 'c1',
+        documentId: 'd1',
+        score: 0.85,
+        snippet: 'found it',
+        sourceRef: 'test',
+      },
+    ])
+    const client = {
+      ingestMemory: vi.fn(async () => ({ id: 'd1', title: 'Spec', chunkCount: 1 })),
+      searchMemory,
+    } as unknown as ApiClient
+
+    render(<MemoryPanel client={client} />)
+    const searchInput = screen.getByPlaceholderText('Search memory')
+    fireEvent.change(searchInput, { target: { value: 'query' } })
+    fireEvent.keyDown(searchInput, { key: 'a' })
+    expect(searchMemory).not.toHaveBeenCalled()
+    fireEvent.keyDown(searchInput, { key: 'Enter' })
+
+    await waitFor(() => {
+      expect(searchMemory).toHaveBeenCalledWith('query', 5)
+      expect(screen.getByText('found it')).toBeTruthy()
+      expect(screen.getByText('85%')).toBeTruthy()
+      expect(screen.getByText('test')).toBeTruthy()
     })
   })
 })
