@@ -76,8 +76,10 @@ describe('KanbanBoard', () => {
 
     const titleInput = screen.getByPlaceholderText('Task title')
     const descriptionInput = screen.getByPlaceholderText('Description')
+    const prioritySelect = screen.getByLabelText('Priority')
     fireEvent.change(titleInput, { target: { value: 'Added task' } })
     fireEvent.change(descriptionInput, { target: { value: 'new desc' } })
+    fireEvent.change(prioritySelect, { target: { value: 'p1' } })
     fireEvent.click(screen.getByText('Add Task'))
 
     await waitFor(() => {
