@@ -90,6 +90,13 @@ export class ApiClient {
     })
   }
 
+  updateTask(taskId: string, payload: { title?: string; description?: string; priority?: TaskPriority }): Promise<Task> {
+    return this.request(`/api/v1/tasks/${taskId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  }
+
   moveTask(taskId: string, payload: { columnId: string; status: TaskStatus }): Promise<Task> {
     return this.request(`/api/v1/tasks/${taskId}/move`, {
       method: 'POST',

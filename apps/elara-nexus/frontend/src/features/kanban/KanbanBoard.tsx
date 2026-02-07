@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { ApiClient } from '@/lib/api/client'
 import type { BoardDetail, Task, TaskPriority, TaskStatus } from '@/lib/api/types'
+import { TaskDetailDialog } from './TaskDetailDialog'
 
 interface KanbanBoardProps {
   client: ApiClient
@@ -28,6 +29,7 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'p2' as TaskPriority })
   const [error, setError] = useState<string>('')
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   useEffect(() => {
     void (async () => {
@@ -140,7 +142,13 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
                   <div className="flex items-start gap-2">
                     <span className={`priority-dot mt-1.5 priority-${task.priority}`} title={priorityLabels[task.priority]} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-text-primary">{task.title}</p>
+                      <button
+                        type="button"
+                        className="text-left text-sm font-medium text-text-primary hover:text-accent cursor-pointer bg-transparent border-none p-0"
+                        onClick={() => setSelectedTask(task)}
+                      >
+                        {task.title}
+                      </button>
                       {task.description ? (
                         <p className="mt-0.5 text-xs text-text-secondary line-clamp-2">{task.description}</p>
                       ) : null}
@@ -182,6 +190,18 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
           </article>
         ))}
       </div>
+
+      {selectedTask && board ? (
+        <TaskDetailDialog
+          task={selectedTask}
+          board={board}
+          client={client}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={(updated) => {
+            setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+          }}
+        />
+      ) : null}
     </section>
   )
 }
