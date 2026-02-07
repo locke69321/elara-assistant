@@ -6,7 +6,7 @@ import type { ApiClient } from '@/lib/api/client'
 
 import { KanbanBoard } from './KanbanBoard'
 
-function buildClientMock(): { client: ApiClient; moveTaskMock: Mock } {
+function buildClientMock(): { client: ApiClient; moveTaskMock: Mock; updateTaskMock: Mock } {
   const listBoards = vi.fn(async () => [{ id: 'b1', name: 'Board' }])
   const createBoard = vi.fn(async (name: string) => ({ id: 'b2', name }))
   const getBoard = vi.fn(async () => ({
@@ -52,6 +52,17 @@ function buildClientMock(): { client: ApiClient; moveTaskMock: Mock } {
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:01.000Z',
   }))
+  const updateTask = vi.fn(async () => ({
+    id: 't1',
+    boardId: 'b1',
+    columnId: 'c1',
+    title: 'Updated title',
+    description: 'desc',
+    priority: 'p2' as const,
+    status: 'todo' as const,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:01.000Z',
+  }))
 
   const client = {
     listBoards,
@@ -60,9 +71,10 @@ function buildClientMock(): { client: ApiClient; moveTaskMock: Mock } {
     listTasks,
     createTask,
     moveTask,
+    updateTask,
   } as unknown as ApiClient
 
-  return { client, moveTaskMock: moveTask as unknown as Mock }
+  return { client, moveTaskMock: moveTask as unknown as Mock, updateTaskMock: updateTask as unknown as Mock }
 }
 
 describe('KanbanBoard', () => {
@@ -221,6 +233,30 @@ describe('KanbanBoard', () => {
     fireEvent.click(screen.getByText('Cancel'))
 
     await waitFor(() => {
+      expect(screen.queryByText('Edit Task')).toBeNull()
+    })
+  })
+
+  it('updates task list when saving via detail dialog', async () => {
+    const { client, updateTaskMock } = buildClientMock()
+    render(<KanbanBoard client={client} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Initial task')).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByText('Initial task'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Task')).toBeTruthy()
+    })
+
+    fireEvent.change(screen.getByDisplayValue('Initial task'), { target: { value: 'Updated title' } })
+    fireEvent.click(screen.getByText('Save'))
+
+    await waitFor(() => {
+      expect(updateTaskMock).toHaveBeenCalled()
+      expect(screen.getByText('Updated title')).toBeTruthy()
       expect(screen.queryByText('Edit Task')).toBeNull()
     })
   })
