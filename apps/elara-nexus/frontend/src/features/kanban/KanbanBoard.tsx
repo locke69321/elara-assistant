@@ -16,6 +16,13 @@ const statusByColumnKey: Record<string, TaskStatus> = {
   done: 'done',
 }
 
+const priorityLabels: Record<TaskPriority, string> = {
+  p0: 'Critical',
+  p1: 'High',
+  p2: 'Medium',
+  p3: 'Low',
+}
+
 export function KanbanBoard({ client }: KanbanBoardProps) {
   const [board, setBoard] = useState<BoardDetail | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
@@ -86,7 +93,7 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
       <h2 className="section-title">Kanban</h2>
       {error ? <p className="error-message">{error}</p> : null}
 
-      <div className="mt-4 grid gap-2 md:grid-cols-3">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <input
           className="input"
           placeholder="Task title"
@@ -99,6 +106,16 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
           value={newTask.description}
           onChange={(event) => setNewTask((prev) => ({ ...prev, description: event.target.value }))}
         />
+        <select
+          className="input"
+          value={newTask.priority}
+          aria-label="Priority"
+          onChange={(event) => setNewTask((prev) => ({ ...prev, priority: event.target.value as TaskPriority }))}
+        >
+          {(Object.keys(priorityLabels) as TaskPriority[]).map((key) => (
+            <option key={key} value={key}>{priorityLabels[key]}</option>
+          ))}
+        </select>
         <button
           type="button"
           className="btn btn-primary"
@@ -110,41 +127,54 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+      <div className="mt-4 grid gap-3 overflow-x-auto" style={{ gridTemplateColumns: `repeat(${board?.columns.length ?? 3}, minmax(200px, 1fr))` }}>
         {board?.columns.map((column) => (
-          <article key={column.id} className="rounded-lg border border-border-subtle bg-surface-raised p-3">
-            <header className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-text-primary">{column.name}</h3>
+          <article key={column.id} className="rounded-lg border border-border-subtle bg-surface-raised p-3 min-w-0">
+            <header className="mb-3 flex items-center justify-between border-b border-border-subtle pb-2">
+              <h3 className="text-sm font-semibold text-text-primary">{column.name}</h3>
               <span className="badge">{tasksByColumn.get(column.id)?.length ?? 0}</span>
             </header>
             <ul className="space-y-2">
               {(tasksByColumn.get(column.id) ?? []).map((task) => (
-                <li key={task.id} className="rounded-md border border-border-subtle bg-surface p-2 shadow-sm">
-                  <p className="text-sm font-medium text-text-primary">{task.title}</p>
-                  <p className="text-xs text-text-secondary">{task.description}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <label className="text-xs text-text-muted" htmlFor={`status-${task.id}`}>
-                      Move
-                    </label>
-                    <select
-                      id={`status-${task.id}`}
-                      className="input px-1 py-0.5 text-xs"
-                      value={task.status}
-                      onChange={(event) => {
-                        const nextStatus = event.target.value as TaskStatus
-                        const targetColumn = board.columns.find((item) => item.key === nextStatus)
-                        if (!targetColumn) {
-                          return
-                        }
-                        void moveTask(task.id, targetColumn.id, statusByColumnKey[nextStatus])
-                      }}
-                    >
-                      {board.columns.map((item) => (
-                        <option key={item.id} value={item.key}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
+                <li key={task.id} className="rounded-md border border-border-subtle bg-surface p-3 shadow-sm">
+                  <div className="flex items-start gap-2">
+                    <span className={`priority-dot mt-1.5 priority-${task.priority}`} title={priorityLabels[task.priority]} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-text-primary">{task.title}</p>
+                      {task.description ? (
+                        <p className="mt-0.5 text-xs text-text-secondary line-clamp-2">{task.description}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2 border-t border-border-subtle pt-2">
+                    <span className={`text-xs font-medium priority-label-${task.priority}`}>
+                      {priorityLabels[task.priority]}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <label className="text-xs text-text-muted" htmlFor={`status-${task.id}`}>
+                        Move
+                      </label>
+                      <select
+                        id={`status-${task.id}`}
+                        className="input px-1 py-0.5 text-xs"
+                        value={task.status}
+                        onChange={(event) => {
+                          const nextStatus = event.target.value as TaskStatus
+                          const targetColumn = board.columns.find((item) => item.key === nextStatus)
+                          const mappedStatus = statusByColumnKey[nextStatus]
+                          if (!targetColumn || !mappedStatus) {
+                            return
+                          }
+                          void moveTask(task.id, targetColumn.id, mappedStatus)
+                        }}
+                      >
+                        {board.columns.map((item) => (
+                          <option key={item.id} value={item.key}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </li>
               ))}
