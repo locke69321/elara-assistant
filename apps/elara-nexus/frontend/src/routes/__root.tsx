@@ -22,9 +22,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="bg-slate-100 text-slate-900">
+      <body className="bg-bg text-text-primary">
         <Header />
-        <main className="mx-auto max-w-7xl p-4">{children}</main>
+        <main className="mx-auto max-w-7xl p-4 sm:p-6">{children}</main>
         <Scripts />
       </body>
     </html>

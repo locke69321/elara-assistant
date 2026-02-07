@@ -39,29 +39,29 @@ export function ChatPanel({ client }: ChatPanelProps) {
   }
 
   return (
-    <section className="rounded-lg border border-slate-300 bg-white p-4">
-      <h2 className="text-lg font-semibold text-slate-900">Chat Runtime</h2>
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+    <section className="card">
+      <h2 className="section-title">Chat Runtime</h2>
+      {error ? <p className="error-message">{error}</p> : null}
 
-      <div className="mt-3 h-56 overflow-auto rounded border border-slate-200 p-2">
+      <div className="mt-3 h-56 overflow-auto rounded-md border border-border-subtle bg-surface-sunken p-2">
         {messages.map((message) => (
           <div key={message.id} className="mb-2 text-sm">
-            <span className="font-semibold text-slate-800">{message.role}: </span>
-            <span className="text-slate-700">{message.content}</span>
+            <span className="font-semibold text-text-primary">{message.role}: </span>
+            <span className="text-text-secondary">{message.content}</span>
           </div>
         ))}
       </div>
 
       <div className="mt-3 flex gap-2">
         <input
-          className="flex-1 rounded border border-slate-300 px-2 py-1"
+          className="input flex-1"
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder="Message"
         />
         <button
           type="button"
-          className="rounded bg-slate-900 px-3 py-1 text-white"
+          className="btn btn-primary"
           onClick={() => {
             void sendMessage()
           }}
