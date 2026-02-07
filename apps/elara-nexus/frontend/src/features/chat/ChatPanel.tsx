@@ -59,9 +59,9 @@ export function ChatPanel({ client }: ChatPanelProps) {
   return (
     <section className="card">
       <h2 className="section-title">Chat Runtime</h2>
-      {error ? <p className="error-message">{error}</p> : null}
+      {error ? <p className="error-message" role="alert">{error}</p> : null}
 
-      <div ref={scrollRef} className="mt-3 flex h-64 flex-col gap-2 overflow-auto rounded-md border border-border-subtle bg-surface-sunken p-3">
+      <div ref={scrollRef} role="log" aria-label="Chat messages" className="mt-3 flex h-64 flex-col gap-2 overflow-auto rounded-md border border-border-subtle bg-surface-sunken p-3">
         {messages.length === 0 ? (
           <p className="m-auto text-sm text-text-muted">No messages yet</p>
         ) : null}
@@ -86,6 +86,7 @@ export function ChatPanel({ client }: ChatPanelProps) {
           value={input}
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
+          aria-label="Message"
           placeholder="Message"
           disabled={sending}
         />

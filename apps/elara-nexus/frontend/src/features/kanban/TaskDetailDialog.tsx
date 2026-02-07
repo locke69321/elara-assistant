@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import type { ApiClient } from '@/lib/api/client'
 import type { BoardDetail, Task, TaskPriority, TaskStatus } from '@/lib/api/types'
@@ -43,6 +43,17 @@ export function TaskDetailDialog({ task, board, client, onClose, onUpdate }: Tas
     setError('')
   }, [task])
 
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      onClose()
+    }
+  }, [onClose])
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
   const save = async () => {
     setSaving(true)
     setError('')
@@ -83,10 +94,11 @@ export function TaskDetailDialog({ task, board, client, onClose, onUpdate }: Tas
         className="dialog-panel"
         role="dialog"
         aria-label="Task details"
+        aria-modal="true"
         onClick={(event) => event.stopPropagation()}
       >
         <h3 className="dialog-title">Edit Task</h3>
-        {error ? <p className="error-message">{error}</p> : null}
+        {error ? <p className="error-message" role="alert">{error}</p> : null}
 
         <div className="mt-4 grid gap-3">
           <label className="label">

@@ -63,14 +63,15 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
   return (
     <section className="card">
       <h2 className="section-title">Memory</h2>
-      {error ? <p className="error-message">{error}</p> : null}
-      {success ? <p className="success-message">{success}</p> : null}
+      {error ? <p className="error-message" role="alert">{error}</p> : null}
+      {success ? <p className="success-message" role="status">{success}</p> : null}
 
       <div className="mt-4 rounded-lg border border-border-subtle bg-surface-raised p-3">
         <h3 className="text-sm font-semibold text-text-primary mb-3">Ingest Document</h3>
         <div className="grid gap-2">
           <input
             className="input"
+            aria-label="Document title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Document title"
@@ -78,6 +79,7 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
           />
           <textarea
             className="input"
+            aria-label="Document content"
             value={content}
             onChange={(event) => setContent(event.target.value)}
             placeholder="Document content"
@@ -102,6 +104,7 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
         <div className="flex gap-2">
           <input
             className="input flex-1"
+            aria-label="Search memory"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={handleSearchKeyDown}
