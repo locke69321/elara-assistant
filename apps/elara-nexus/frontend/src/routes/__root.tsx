@@ -22,12 +22,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="bg-bg text-text-primary">
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 btn btn-primary">
+      <body className="app-body">
+        <a
+          href="#main-content"
+          className="sr-only btn btn-primary focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50"
+        >
           Skip to content
         </a>
         <Header />
-        <main id="main-content" className="mx-auto max-w-7xl p-4 sm:p-6">{children}</main>
+        <main id="main-content" className="app-shell">{children}</main>
         <Scripts />
       </body>
     </html>

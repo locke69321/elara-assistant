@@ -61,12 +61,17 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
   }
 
   return (
-    <section className="card">
-      <h2 className="section-title">Memory</h2>
+    <section className="card" data-animate="rise" data-delay="2">
+      <div className="card-header">
+        <div>
+          <p className="panel-kicker">Knowledge</p>
+          <h2 className="section-title">Memory</h2>
+        </div>
+      </div>
       {error ? <p className="error-message" role="alert">{error}</p> : null}
       {success ? <p className="success-message" role="status">{success}</p> : null}
 
-      <div className="mt-4 rounded-lg border border-border-subtle bg-surface-raised p-3">
+      <div className="soft-panel mt-4">
         <h3 className="text-sm font-semibold text-text-primary mb-3">Ingest Document</h3>
         <div className="grid gap-2">
           <input
@@ -99,7 +104,7 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-lg border border-border-subtle bg-surface-raised p-3">
+      <div className="soft-panel mt-4">
         <h3 className="text-sm font-semibold text-text-primary mb-3">Search Memory</h3>
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
@@ -128,9 +133,9 @@ export function MemoryPanel({ client }: MemoryPanelProps) {
         ) : null}
 
         {results.length > 0 ? (
-          <ul className="mt-3 space-y-2">
+          <ul className="memory-results">
             {results.map((result) => (
-              <li key={result.chunkId} className="rounded-md border border-border-subtle bg-surface p-3">
+              <li key={result.chunkId} className="memory-result">
                 <div className="flex items-start justify-between gap-2">
                   <p className="flex-1 text-sm text-text-primary">{result.snippet}</p>
                   <span className="badge shrink-0">{Math.round(result.score * 100)}%</span>

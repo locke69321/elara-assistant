@@ -17,9 +17,14 @@ export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
   }
 
   return (
-    <section className="card">
-      <h2 className="section-title">Settings</h2>
-      <p className="section-subtitle">Configure API base URL and bearer token.</p>
+    <section className="card" data-animate="rise">
+      <div className="card-header">
+        <div>
+          <p className="panel-kicker">Configuration</p>
+          <h2 className="section-title">Settings</h2>
+          <p className="section-subtitle">Configure API base URL and bearer token.</p>
+        </div>
+      </div>
       {saved ? <p className="success-message" role="status">Settings saved</p> : null}
 
       <div className="mt-4 grid gap-3">

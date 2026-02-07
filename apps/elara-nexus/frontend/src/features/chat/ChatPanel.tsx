@@ -1,31 +1,66 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { ApiClient } from '@/lib/api/client'
-import type { ChatMessage, ChatSession } from '@/lib/api/types'
+import type { ChatMessage } from '@/lib/api/types'
 
 interface ChatPanelProps {
   client: ApiClient
+  onActivityStateChange?: (state: 'idle' | 'working') => void
+  sessionId?: string | null
+  autoCreateSession?: boolean
 }
 
-export function ChatPanel({ client }: ChatPanelProps) {
-  const [session, setSession] = useState<ChatSession | null>(null)
+export function ChatPanel({ client, onActivityStateChange, sessionId, autoCreateSession = true }: ChatPanelProps) {
+  const [internalSessionId, setInternalSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const activeSessionId = sessionId ?? internalSessionId
 
   useEffect(() => {
+    let active = true
+
     void (async () => {
       try {
+        setError('')
+        if (sessionId) {
+          const msgs = await client.listChatMessages(sessionId)
+          if (!active) {
+            return
+          }
+          setMessages(msgs)
+          return
+        }
+
+        if (!autoCreateSession) {
+          setInternalSessionId(null)
+          setMessages([])
+          return
+        }
+
         const created = await client.createChatSession('Primary Session')
-        setSession(created)
-        setMessages(await client.listChatMessages(created.id))
+        if (!active) {
+          return
+        }
+        const msgs = await client.listChatMessages(created.id)
+        if (!active) {
+          return
+        }
+        setInternalSessionId(created.id)
+        setMessages(msgs)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to initialize chat')
+        if (active) {
+          setError(err instanceof Error ? err.message : 'Failed to initialize chat')
+        }
       }
     })()
-  }, [client])
+
+    return () => {
+      active = false
+    }
+  }, [autoCreateSession, client, sessionId])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -34,18 +69,20 @@ export function ChatPanel({ client }: ChatPanelProps) {
   }, [messages])
 
   const sendMessage = async () => {
-    if (!session || !input.trim() || sending) {
+    if (!activeSessionId || !input.trim() || sending) {
       return
     }
     setSending(true)
+    onActivityStateChange?.('working')
     try {
-      await client.sendChatMessage(session.id, input.trim())
-      setMessages(await client.listChatMessages(session.id))
+      await client.sendChatMessage(activeSessionId, input.trim())
+      setMessages(await client.listChatMessages(activeSessionId))
       setInput('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message')
     } finally {
       setSending(false)
+      onActivityStateChange?.('idle')
     }
   }
 
@@ -57,21 +94,27 @@ export function ChatPanel({ client }: ChatPanelProps) {
   }
 
   return (
-    <section className="card">
-      <h2 className="section-title">Chat Runtime</h2>
+    <section className="card" data-animate="rise" data-delay="3">
+      <div className="card-header">
+        <div>
+          <p className="panel-kicker">Operator</p>
+          <h2 className="section-title">Chat Runtime</h2>
+          {activeSessionId ? <p className="section-subtitle">Session active</p> : <p className="section-subtitle">Select a session to begin</p>}
+        </div>
+      </div>
       {error ? <p className="error-message" role="alert">{error}</p> : null}
 
-      <div ref={scrollRef} role="log" aria-label="Chat messages" className="mt-3 flex h-64 flex-col gap-2 overflow-auto rounded-md border border-border-subtle bg-surface-sunken p-3">
+      <div ref={scrollRef} role="log" aria-label="Chat messages" className="chat-log">
         {messages.length === 0 ? (
           <p className="m-auto text-sm text-text-muted">No messages yet</p>
         ) : null}
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+            className={`message-bubble ${
               message.role === 'user'
-                ? 'self-end bg-interactive text-on-interactive'
-                : 'self-start bg-surface-raised border border-border-subtle text-text-primary'
+                ? 'message-bubble--user'
+                : 'message-bubble--assistant'
             }`}
           >
             <p className="text-xs font-medium opacity-70 mb-0.5">{message.role === 'user' ? 'You' : 'Assistant'}</p>
@@ -88,12 +131,12 @@ export function ChatPanel({ client }: ChatPanelProps) {
           onKeyDown={handleKeyDown}
           aria-label="Message"
           placeholder="Message"
-          disabled={sending}
+          disabled={sending || !activeSessionId}
         />
         <button
           type="button"
           className="btn btn-primary"
-          disabled={sending || !input.trim()}
+          disabled={sending || !input.trim() || !activeSessionId}
           onClick={() => {
             void sendMessage()
           }}
