@@ -104,19 +104,6 @@
   background: radial-gradient(circle at 50% 110%, rgb(73 220 177 / 0.16), transparent 46%);
 }
 
-.skip-link {
-  position: fixed;
-  left: 1rem;
-  top: 1rem;
-  z-index: 60;
-  transform: translateY(-150%);
-  transition: transform var(--duration-normal) var(--ease-default);
-}
-
-.skip-link:focus {
-  transform: translateY(0);
-}
-
 .app-shell {
   width: calc(100% - 2rem);
   margin: 1.1rem auto 2.3rem;

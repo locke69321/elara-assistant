@@ -26,7 +26,11 @@ export function ChatPanel({ client, onActivityStateChange, sessionId, autoCreate
       try {
         setError('')
         if (sessionId) {
-          setMessages(await client.listChatMessages(sessionId))
+          const msgs = await client.listChatMessages(sessionId)
+          if (!active) {
+            return
+          }
+          setMessages(msgs)
           return
         }
 
@@ -40,8 +44,12 @@ export function ChatPanel({ client, onActivityStateChange, sessionId, autoCreate
         if (!active) {
           return
         }
+        const msgs = await client.listChatMessages(created.id)
+        if (!active) {
+          return
+        }
         setInternalSessionId(created.id)
-        setMessages(await client.listChatMessages(created.id))
+        setMessages(msgs)
       } catch (err) {
         if (active) {
           setError(err instanceof Error ? err.message : 'Failed to initialize chat')

@@ -10,7 +10,7 @@ export function MemoryPage() {
 
   return (
     <div className="dashboard-flow">
-      <div data-animate="rise">
+      <div>
         <MemoryPanel client={client} />
       </div>
     </div>

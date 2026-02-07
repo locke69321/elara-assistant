@@ -23,7 +23,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="app-body">
-        <a href="#main-content" className="skip-link btn btn-primary">
+        <a
+          href="#main-content"
+          className="sr-only btn btn-primary focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50"
+        >
           Skip to content
         </a>
         <Header />

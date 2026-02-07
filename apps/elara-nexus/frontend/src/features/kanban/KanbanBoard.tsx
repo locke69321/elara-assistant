@@ -49,15 +49,13 @@ function statusToLane(status: TaskStatus): KanbanLaneId {
 }
 
 function resolveTargetForLane(board: BoardDetail, lane: KanbanLaneId): { columnId: string; status: TaskStatus } | null {
-  const targetStatus = lanePreferredColumns[lane].find((key) => board.columns.some((column) => column.key === key))
-  if (!targetStatus) {
-    return null
+  for (const preferredStatus of lanePreferredColumns[lane]) {
+    const targetColumn = board.columns.find((column) => column.key === preferredStatus)
+    if (targetColumn) {
+      return { columnId: targetColumn.id, status: preferredStatus }
+    }
   }
-  const targetColumn = board.columns.find((column) => column.key === targetStatus)
-  if (!targetColumn) {
-    return null
-  }
-  return { columnId: targetColumn.id, status: targetStatus }
+  return null
 }
 
 function isKanbanLane(value: string): value is KanbanLaneId {
@@ -105,7 +103,11 @@ export function KanbanBoard({ client, showTaskComposer = true, refreshNonce = 0 
       return
     }
     const target = resolveTargetForLane(board, 'backlog')
-    if (!target || !newTask.title.trim()) {
+    if (!target) {
+      setError('Cannot create task: backlog column mapping is missing.')
+      return
+    }
+    if (!newTask.title.trim()) {
       return
     }
 
@@ -221,15 +223,13 @@ export function KanbanBoard({ client, showTaskComposer = true, refreshNonce = 0 
                         className="input px-1 py-0.5 text-xs"
                         value={statusToLane(task.status)}
                         onChange={(event) => {
-                          if (!board) {
-                            return
-                          }
                           const nextLane = event.target.value
                           if (!isKanbanLane(nextLane)) {
                             return
                           }
-                          const target = resolveTargetForLane(board, nextLane)
+                          const target = resolveTargetForLane(board as BoardDetail, nextLane)
                           if (!target) {
+                            setError(`Cannot move task to unmapped lane: ${nextLane}`)
                             return
                           }
                           void moveTask(task.id, target.columnId, target.status)

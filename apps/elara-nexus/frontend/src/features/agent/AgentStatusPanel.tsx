@@ -54,7 +54,7 @@ export function AgentStatusPanel({ client, activityState, subagents = [] }: Agen
 
   const isOffline = backendState === 'offline'
   const activityLabel = isOffline ? 'Offline' : activityState === 'working' ? 'Active' : 'Idle'
-  const statusClass = isOffline || activityState === 'working' ? 'status-pill--live' : ''
+  const statusClass = activityState === 'working' ? 'status-pill--live' : ''
 
   return (
     <section className="card" data-animate="rise" data-delay="2" aria-live="polite">
