@@ -3,6 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.api.schemas import (
+    AgentStatusResponse,
     BoardCreateRequest,
     BoardDetailResponse,
     BoardPatchRequest,
@@ -34,6 +35,7 @@ from app.infra.db.session import get_db_session
 from app.infra.llm.litellm_client import LiteLlmClient
 from app.infra.telemetry.langfuse import LangfuseTracer
 from app.repositories.sqlalchemy_repo import SqlAlchemyRepository
+from app.services.agent_service import AgentService
 from app.services.board_service import BoardService
 from app.services.chat_service import ChatService
 from app.services.memory_service import MemoryService
@@ -75,6 +77,18 @@ def me(session: Session = Depends(get_db_session)) -> MeResponse:
         session.commit()
         session.refresh(user)
     return MeResponse(id=user.id, email=user.email, name=user.name)
+
+
+@router.get("/agent/status", response_model=AgentStatusResponse)
+def agent_status(session: Session = Depends(get_db_session)) -> AgentStatusResponse:
+    service = AgentService(SqlAlchemyRepository(session))
+    status = service.get_status()
+    return AgentStatusResponse(
+        status=status["status"],
+        subagents=status["subagents"],
+        activeRuns=status["activeRuns"],
+        lastRunAt=parse_iso(status["lastRunAt"]) if status["lastRunAt"] is not None else None,
+    )
 
 
 @router.get("/boards", response_model=list[BoardResponse])

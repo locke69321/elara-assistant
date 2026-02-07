@@ -15,6 +15,13 @@ class MeResponse(BaseModel):
     name: str
 
 
+class AgentStatusResponse(BaseModel):
+    status: str
+    subagents: list[str]
+    activeRuns: int
+    lastRunAt: datetime | None
+
+
 class BoardCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
 

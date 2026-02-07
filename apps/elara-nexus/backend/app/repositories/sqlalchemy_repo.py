@@ -219,6 +219,14 @@ class SqlAlchemyRepository:
         self.session.refresh(run)
         return run
 
+    def list_runs_by_status(self, status: RunStatus) -> list[Run]:
+        stmt = select(Run).where(Run.status == status.value).order_by(Run.created_at.asc())
+        return list(self.session.scalars(stmt).all())
+
+    def latest_run(self) -> Run | None:
+        stmt = select(Run).order_by(Run.created_at.desc())
+        return self.session.scalar(stmt)
+
     def create_memory_document(self, title: str, content: str, source_ref: str) -> MemoryDocument:
         doc = MemoryDocument(title=title, content=content, source_ref=source_ref)
         self.session.add(doc)

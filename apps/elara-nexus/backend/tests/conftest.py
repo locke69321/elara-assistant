@@ -8,10 +8,8 @@ from fastapi.testclient import TestClient
 
 
 def _configure_env(db_path: Path) -> None:
-    if "APP_DB_URL" not in os.environ:
-        os.environ["APP_DB_URL"] = f"sqlite:///{db_path}"
-    if "APP_DB_ENGINE" not in os.environ:
-        os.environ["APP_DB_ENGINE"] = "sqlite"
+    os.environ["APP_DB_URL"] = f"sqlite:///{db_path}"
+    os.environ["APP_DB_ENGINE"] = "sqlite"
     os.environ["APP_AUTH_TOKEN"] = "test-token"
     os.environ["APP_CORS_ORIGINS"] = "http://localhost:3000"
     os.environ["APP_VECTOR_DIMENSIONS"] = "8"

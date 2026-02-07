@@ -63,6 +63,13 @@ class ChatMessageData(TypedDict):
     run: NotRequired[ChatRunData | None]
 
 
+class AgentStatusData(TypedDict):
+    status: str
+    subagents: list[str]
+    activeRuns: int
+    lastRunAt: str | None
+
+
 class MemoryDocumentData(TypedDict):
     id: str
     title: str
