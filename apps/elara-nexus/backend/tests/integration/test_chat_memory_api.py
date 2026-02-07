@@ -1,6 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.infra.llm.litellm_client import LlmReply
+
 
 @pytest.mark.integration
 def test_chat_flow(client: TestClient, auth_headers: dict[str, str]) -> None:
@@ -78,3 +80,66 @@ def test_chat_assistant_message_and_missing_memory_doc(
 
     missing = client.get("/api/v1/memory/documents/not-real", headers=auth_headers)
     assert missing.status_code == 404
+
+
+@pytest.mark.integration
+def test_chat_missing_session_returns_not_found(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    missing_send = client.post(
+        "/api/v1/chat/sessions/missing/messages",
+        json={"role": "user", "content": "Hello"},
+        headers=auth_headers,
+    )
+    assert missing_send.status_code == 404
+    assert missing_send.json()["detail"] == "Session not found"
+
+    missing_list = client.get("/api/v1/chat/sessions/missing/messages", headers=auth_headers)
+    assert missing_list.status_code == 404
+    assert missing_list.json()["detail"] == "Session not found"
+
+
+@pytest.mark.integration
+def test_chat_completion_uses_conversation_history(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_payloads: list[list[dict[str, str]]] = []
+
+    def _fake_generate_reply(
+        _self: object, messages: list[dict[str, str]]
+    ) -> LlmReply:
+        captured_payloads.append(messages)
+        return LlmReply(content="stub-response", provider="litellm", model="test-model")
+
+    monkeypatch.setattr(
+        "app.infra.llm.litellm_client.LiteLlmClient.generate_reply",
+        _fake_generate_reply,
+    )
+
+    create = client.post("/api/v1/chat/sessions", json={"title": "Context"}, headers=auth_headers)
+    assert create.status_code == 200
+    session = create.json()
+
+    first_send = client.post(
+        f"/api/v1/chat/sessions/{session['id']}/messages",
+        json={"role": "user", "content": "first prompt"},
+        headers=auth_headers,
+    )
+    assert first_send.status_code == 200
+
+    second_send = client.post(
+        f"/api/v1/chat/sessions/{session['id']}/messages",
+        json={"role": "user", "content": "second prompt"},
+        headers=auth_headers,
+    )
+    assert second_send.status_code == 200
+
+    assert len(captured_payloads) == 2
+    assert captured_payloads[0] == [{"role": "user", "content": "first prompt"}]
+    assert captured_payloads[1] == [
+        {"role": "user", "content": "first prompt"},
+        {"role": "assistant", "content": "stub-response"},
+        {"role": "user", "content": "second prompt"},
+    ]

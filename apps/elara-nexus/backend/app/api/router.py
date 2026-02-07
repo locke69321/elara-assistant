@@ -238,7 +238,14 @@ def add_chat_message(
 ) -> ChatMessageResponse:
     repo = SqlAlchemyRepository(session)
     service = ChatService(repo, LiteLlmClient(settings), LangfuseTracer(settings))
-    item = service.add_message(session_id=session_id, role=payload.role, content=payload.content)
+    try:
+        item = service.add_message(
+            session_id=session_id,
+            role=payload.role,
+            content=payload.content,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     run = item.get("run")
     return ChatMessageResponse(
         id=item["id"],
@@ -258,7 +265,10 @@ def list_chat_messages(
 ) -> list[ChatMessageResponse]:
     repo = SqlAlchemyRepository(session)
     service = ChatService(repo, LiteLlmClient(settings), LangfuseTracer(settings))
-    messages = service.list_messages(session_id=session_id)
+    try:
+        messages = service.list_messages(session_id=session_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     return [
         ChatMessageResponse(
             id=item["id"],

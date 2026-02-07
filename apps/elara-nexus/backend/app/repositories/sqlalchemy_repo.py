@@ -172,6 +172,9 @@ class SqlAlchemyRepository:
         self.session.refresh(session)
         return session
 
+    def get_chat_session(self, session_id: str) -> ChatSession | None:
+        return self.session.get(ChatSession, session_id)
+
     def list_chat_sessions(self) -> list[ChatSession]:
         stmt = select(ChatSession).order_by(ChatSession.created_at.desc())
         return list(self.session.scalars(stmt).all())
