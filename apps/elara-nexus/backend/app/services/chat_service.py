@@ -24,7 +24,20 @@ class ChatService:
             "createdAt": session.created_at.isoformat(),
         }
 
+    def list_sessions(self) -> list[ChatSessionData]:
+        return [
+            {
+                "id": session.id,
+                "title": session.title,
+                "createdAt": session.created_at.isoformat(),
+            }
+            for session in self.repo.list_chat_sessions()
+        ]
+
     def add_message(self, session_id: str, role: str, content: str) -> ChatMessageData:
+        if self.repo.get_chat_session(session_id) is None:
+            raise ValueError("Session not found")
+
         message = self.repo.add_chat_message(session_id=session_id, role=role, content=content)
 
         run_payload: ChatRunData | None = None
@@ -38,10 +51,14 @@ class ChatService:
                 trace_id=trace.trace_id,
             )
             try:
+                prior_messages = self.repo.list_chat_messages(session_id)
+                prompt_messages = [
+                    {"role": prior.role, "content": prior.content}
+                    for prior in prior_messages
+                    if prior.role in {"user", "assistant"}
+                ]
                 reply = self.llm_client.generate_reply(
-                    [
-                        {"role": "user", "content": content},
-                    ]
+                    prompt_messages
                 )
                 self.repo.add_chat_message(
                     session_id=session_id, role="assistant", content=reply.content
@@ -70,6 +87,9 @@ class ChatService:
         }
 
     def list_messages(self, session_id: str) -> list[ChatMessageData]:
+        if self.repo.get_chat_session(session_id) is None:
+            raise ValueError("Session not found")
+
         return [
             {
                 "id": message.id,

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { AgentStatusPanel } from '@/features/agent/AgentStatusPanel'
 import { ChatPanel } from '@/features/chat/ChatPanel'
@@ -16,9 +16,8 @@ export function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [sessionError, setSessionError] = useState('')
   const [creatingSession, setCreatingSession] = useState(false)
-  const initializedRef = useRef(false)
 
-  const createSession = async () => {
+  const createSession = useCallback(async () => {
     setCreatingSession(true)
     setSessionError('')
     try {
@@ -31,15 +30,30 @@ export function ChatPage() {
     } finally {
       setCreatingSession(false)
     }
-  }
+  }, [client, sessions.length])
+
+  const loadSessions = useCallback(async () => {
+    setSessionError('')
+    try {
+      const existing = await client.listChatSessions()
+      setSessions(existing)
+
+      if (existing.length > 0) {
+        setActiveSessionId(existing[0]?.id ?? null)
+        return
+      }
+
+      const created = await client.createChatSession('Session 1')
+      setSessions([created])
+      setActiveSessionId(created.id)
+    } catch (err) {
+      setSessionError(err instanceof Error ? err.message : 'Failed to load sessions')
+    }
+  }, [client])
 
   useEffect(() => {
-    if (initializedRef.current) {
-      return
-    }
-    initializedRef.current = true
-    void createSession()
-  }, [client])
+    void loadSessions()
+  }, [loadSessions])
 
   return (
     <div className="dashboard-flow dashboard-flow--wide">

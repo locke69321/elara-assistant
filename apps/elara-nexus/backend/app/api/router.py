@@ -3,6 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.api.schemas import (
+    AgentStatusResponse,
     BoardCreateRequest,
     BoardDetailResponse,
     BoardPatchRequest,
@@ -34,6 +35,7 @@ from app.infra.db.session import get_db_session
 from app.infra.llm.litellm_client import LiteLlmClient
 from app.infra.telemetry.langfuse import LangfuseTracer
 from app.repositories.sqlalchemy_repo import SqlAlchemyRepository
+from app.services.agent_service import AgentService
 from app.services.board_service import BoardService
 from app.services.chat_service import ChatService
 from app.services.memory_service import MemoryService
@@ -75,6 +77,18 @@ def me(session: Session = Depends(get_db_session)) -> MeResponse:
         session.commit()
         session.refresh(user)
     return MeResponse(id=user.id, email=user.email, name=user.name)
+
+
+@router.get("/agent/status", response_model=AgentStatusResponse)
+def agent_status(session: Session = Depends(get_db_session)) -> AgentStatusResponse:
+    service = AgentService(SqlAlchemyRepository(session))
+    status = service.get_status()
+    return AgentStatusResponse(
+        status=status["status"],
+        subagents=status["subagents"],
+        activeRuns=status["activeRuns"],
+        lastRunAt=parse_iso(status["lastRunAt"]) if status["lastRunAt"] is not None else None,
+    )
 
 
 @router.get("/boards", response_model=list[BoardResponse])
@@ -211,6 +225,24 @@ def create_chat_session(
     )
 
 
+@router.get("/chat/sessions", response_model=list[ChatSessionResponse])
+def list_chat_sessions(
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> list[ChatSessionResponse]:
+    repo = SqlAlchemyRepository(session)
+    service = ChatService(repo, LiteLlmClient(settings), LangfuseTracer(settings))
+    sessions = service.list_sessions()
+    return [
+        ChatSessionResponse(
+            id=item["id"],
+            title=item["title"],
+            createdAt=parse_iso(item["createdAt"]),
+        )
+        for item in sessions
+    ]
+
+
 @router.post("/chat/sessions/{session_id}/messages", response_model=ChatMessageResponse)
 def add_chat_message(
     session_id: str,
@@ -220,7 +252,14 @@ def add_chat_message(
 ) -> ChatMessageResponse:
     repo = SqlAlchemyRepository(session)
     service = ChatService(repo, LiteLlmClient(settings), LangfuseTracer(settings))
-    item = service.add_message(session_id=session_id, role=payload.role, content=payload.content)
+    try:
+        item = service.add_message(
+            session_id=session_id,
+            role=payload.role,
+            content=payload.content,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     run = item.get("run")
     return ChatMessageResponse(
         id=item["id"],
@@ -240,7 +279,10 @@ def list_chat_messages(
 ) -> list[ChatMessageResponse]:
     repo = SqlAlchemyRepository(session)
     service = ChatService(repo, LiteLlmClient(settings), LangfuseTracer(settings))
-    messages = service.list_messages(session_id=session_id)
+    try:
+        messages = service.list_messages(session_id=session_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     return [
         ChatMessageResponse(
             id=item["id"],

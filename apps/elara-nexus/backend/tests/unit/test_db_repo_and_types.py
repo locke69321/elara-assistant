@@ -108,6 +108,10 @@ def test_sqlalchemy_repository_core_flows(session: Session) -> None:
     assert len(repo.task_history(task.id)) >= 3
 
     chat = repo.create_chat_session("ops")
+    repo.create_chat_session("ops-2")
+    sessions = repo.list_chat_sessions()
+    assert len(sessions) == 2
+    assert sessions[0].title == "ops-2"
     user_message = repo.add_chat_message(chat.id, "user", "hello")
     assert len(repo.list_chat_messages(chat.id)) == 1
 
