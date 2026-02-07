@@ -1,5 +1,6 @@
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,7 +23,14 @@ configure_logging()
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-app = FastAPI(title="Elara Nexus Backend", version="0.0.1")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    init_db()
+    yield
+
+
+app = FastAPI(title="Elara Nexus Backend", version="0.0.1", lifespan=lifespan)
 
 app.add_middleware(RequestTimeoutMiddleware, timeout_seconds=settings.app_request_timeout_seconds)
 app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.app_max_request_body_bytes)
@@ -52,11 +60,6 @@ async def auth_middleware(
 async def handle_unexpected(_request: Request, exc: Exception) -> JSONResponse:
     logger.exception("unexpected_exception", exc_info=exc)
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    init_db()
 
 
 app.include_router(router)
