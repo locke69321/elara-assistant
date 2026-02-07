@@ -23,7 +23,7 @@ export function HomePage() {
   )
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-6">
       <SettingsPanel
         settings={settings}
         onSave={(next) => {
@@ -31,9 +31,14 @@ export function HomePage() {
           setSettings(next)
         }}
       />
-      <KanbanBoard client={client} />
-      <ChatPanel client={client} />
-      <MemoryPanel client={client} />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <KanbanBoard client={client} />
+        <div className="grid gap-6 content-start">
+          <ChatPanel client={client} />
+          <MemoryPanel client={client} />
+        </div>
+      </div>
     </div>
   )
 }
