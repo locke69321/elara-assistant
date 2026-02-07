@@ -161,10 +161,11 @@ export function KanbanBoard({ client }: KanbanBoardProps) {
                         onChange={(event) => {
                           const nextStatus = event.target.value as TaskStatus
                           const targetColumn = board.columns.find((item) => item.key === nextStatus)
-                          if (!targetColumn) {
+                          const mappedStatus = statusByColumnKey[nextStatus]
+                          if (!targetColumn || !mappedStatus) {
                             return
                           }
-                          void moveTask(task.id, targetColumn.id, statusByColumnKey[nextStatus])
+                          void moveTask(task.id, targetColumn.id, mappedStatus)
                         }}
                       >
                         {board.columns.map((item) => (
