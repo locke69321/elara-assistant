@@ -11,15 +11,15 @@ export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
   const [next, setNext] = useState<AppSettings>(settings)
 
   return (
-    <section className="rounded-lg border border-slate-300 bg-white p-4">
-      <h2 className="text-lg font-semibold text-slate-900">Settings</h2>
-      <p className="mt-1 text-sm text-slate-600">Configure API base URL and bearer token.</p>
+    <section className="card">
+      <h2 className="section-title">Settings</h2>
+      <p className="section-subtitle">Configure API base URL and bearer token.</p>
 
       <div className="mt-4 grid gap-3">
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium text-slate-700">API Base URL</span>
+        <label className="label">
+          <span className="label-text">API Base URL</span>
           <input
-            className="rounded border border-slate-300 px-2 py-1"
+            className="input"
             value={next.apiBaseUrl}
             onChange={(event) =>
               setNext((prev) => ({
@@ -30,11 +30,11 @@ export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
           />
         </label>
 
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium text-slate-700">Bearer Token</span>
+        <label className="label">
+          <span className="label-text">Bearer Token</span>
           <input
             type="password"
-            className="rounded border border-slate-300 px-2 py-1"
+            className="input"
             value={next.apiToken}
             onChange={(event) =>
               setNext((prev) => ({
@@ -48,7 +48,7 @@ export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
 
       <button
         type="button"
-        className="mt-4 rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
+        className="btn btn-primary mt-4 px-4 py-2"
         onClick={() => onSave(next)}
       >
         Save Settings
