@@ -308,8 +308,7 @@ describe('ChatPanel', () => {
       expect(screen.getByText('Select a session to begin')).toBeTruthy()
     })
 
-    const messageInput = screen.getByPlaceholderText('Message') as HTMLInputElement
-    expect(messageInput.disabled).toBe(true)
+    expect(screen.getByPlaceholderText('Message')).toHaveProperty('disabled', true)
   })
 
   it('ignores late auto-created session resolution after unmount', async () => {
