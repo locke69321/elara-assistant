@@ -1,0 +1,67 @@
+[project]
+name = "elara-nexus-backend"
+version = "0.0.1"
+description = "Elara Nexus backend"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn>=0.31.0",
+  "sqlalchemy>=2.0.36",
+  "pydantic>=2.10.0",
+  "pydantic-settings>=2.7.0",
+  "httpx>=0.28.0",
+  "pgvector>=0.3.6",
+  "psycopg[binary]>=3.2.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3.0",
+  "pytest-cov>=6.0.0",
+  "mypy>=1.13.0",
+  "ruff>=0.8.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.26.0"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/api/router.py" = ["B008"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+markers = [
+  "unit: unit tests",
+  "integration: integration tests",
+  "smoke: smoke tests",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["pgvector.*"]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

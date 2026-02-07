@@ -1,0 +1,244 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend-lint:
+    name: backend lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend deps
+        run: uv sync --all-groups
+        working-directory: apps/elara-nexus/backend
+      - name: Ruff
+        run: uv run ruff check .
+        working-directory: apps/elara-nexus/backend
+
+  backend-typecheck:
+    name: backend typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend deps
+        run: uv sync --all-groups
+        working-directory: apps/elara-nexus/backend
+      - name: MyPy
+        run: uv run mypy app
+        working-directory: apps/elara-nexus/backend
+
+  backend-unit:
+    name: backend unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend deps
+        run: uv sync --all-groups
+        working-directory: apps/elara-nexus/backend
+      - name: Unit tests
+        env:
+          APP_AUTH_TOKEN: test-token
+        run: uv run pytest -m unit
+        working-directory: apps/elara-nexus/backend
+
+  backend-integration:
+    name: backend integration
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: elara_nexus_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend deps
+        run: uv sync --all-groups
+        working-directory: apps/elara-nexus/backend
+      - name: Integration tests (SQLite)
+        env:
+          APP_AUTH_TOKEN: test-token
+          APP_DB_ENGINE: sqlite
+        run: uv run pytest -m integration
+        working-directory: apps/elara-nexus/backend
+      - name: Integration tests (Postgres)
+        env:
+          APP_AUTH_TOKEN: test-token
+          APP_DB_ENGINE: postgres
+          APP_DB_URL: postgresql+psycopg://postgres:postgres@localhost:5432/elara_nexus_test
+        run: uv run pytest -m integration
+        working-directory: apps/elara-nexus/backend
+
+  backend-smoke:
+    name: backend smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend deps
+        run: uv sync --all-groups
+        working-directory: apps/elara-nexus/backend
+      - name: Smoke tests
+        env:
+          APP_AUTH_TOKEN: test-token
+        run: uv run pytest -m smoke
+        working-directory: apps/elara-nexus/backend
+
+  backend-coverage:
+    name: backend coverage gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend deps
+        run: uv sync --all-groups
+        working-directory: apps/elara-nexus/backend
+      - name: Coverage tests
+        env:
+          APP_AUTH_TOKEN: test-token
+          APP_DB_ENGINE: sqlite
+        run: |
+          uv run pytest --cov=app --cov-branch --cov-report=term-missing --cov-report=json
+          uv run python scripts/check_coverage.py
+        working-directory: apps/elara-nexus/backend
+
+  frontend-lint:
+    name: frontend lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: apps/elara-nexus/frontend
+      - name: ESLint
+        run: pnpm lint
+        working-directory: apps/elara-nexus/frontend
+
+  frontend-typecheck:
+    name: frontend typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: apps/elara-nexus/frontend
+      - name: Typecheck
+        run: pnpm typecheck
+        working-directory: apps/elara-nexus/frontend
+
+  frontend-unit:
+    name: frontend unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: apps/elara-nexus/frontend
+      - name: Unit tests
+        run: pnpm test:unit
+        working-directory: apps/elara-nexus/frontend
+
+  frontend-integration:
+    name: frontend integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: apps/elara-nexus/frontend
+      - name: Integration tests
+        run: pnpm test:integration
+        working-directory: apps/elara-nexus/frontend
+
+  frontend-smoke:
+    name: frontend smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: apps/elara-nexus/frontend
+      - name: Smoke tests
+        run: pnpm test:smoke
+        working-directory: apps/elara-nexus/frontend
+
+  frontend-coverage:
+    name: frontend coverage gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+        working-directory: apps/elara-nexus/frontend
+      - name: Coverage
+        run: pnpm coverage
+        working-directory: apps/elara-nexus/frontend

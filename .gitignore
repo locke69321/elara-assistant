@@ -3,15 +3,26 @@ __pycache__/
 *.pyc
 
 # Python backend
-backend/.venv/
+apps/elara-nexus/backend/.venv/
+apps/elara-nexus/backend/.mypy_cache/
+apps/elara-nexus/backend/.pytest_cache/
+apps/elara-nexus/backend/.ruff_cache/
+apps/elara-nexus/backend/.coverage
+apps/elara-nexus/backend/coverage.json
 
 # Frontend
-frontend/node_modules/
-frontend/.pnpm-home/
-frontend/.turbo/
-frontend/.tanstack/
-frontend/.output/
+apps/elara-nexus/frontend/node_modules/
+apps/elara-nexus/frontend/.pnpm-home/
+apps/elara-nexus/frontend/.turbo/
+apps/elara-nexus/frontend/.tanstack/
+apps/elara-nexus/frontend/.output/
+apps/elara-nexus/frontend/coverage/
 
 # Local memory/runtime state
 data/*.db
 memory/logs/*.md
+
+# Local secrets
+.env
+.env.local
+.env.*.local

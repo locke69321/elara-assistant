@@ -1,0 +1,49 @@
+name: release-bundles
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Build backend bundle
+        run: |
+          uv sync --all-groups --locked
+          uv build --out-dir dist
+          mkdir -p ../../../dist
+          tar -czf ../../../dist/elara-nexus-backend-${GITHUB_REF_NAME}.tar.gz dist
+        working-directory: apps/elara-nexus/backend
+
+      - name: Build frontend bundle
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          mkdir -p ../../../dist
+          tar -czf ../../../dist/elara-nexus-frontend-${GITHUB_REF_NAME}.tar.gz .output
+        working-directory: apps/elara-nexus/frontend
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
