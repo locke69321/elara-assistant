@@ -9,11 +9,18 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
   const [next, setNext] = useState<AppSettings>(settings)
+  const [saved, setSaved] = useState(false)
+
+  const handleSave = () => {
+    onSave(next)
+    setSaved(true)
+  }
 
   return (
     <section className="card">
       <h2 className="section-title">Settings</h2>
       <p className="section-subtitle">Configure API base URL and bearer token.</p>
+      {saved ? <p className="success-message">Settings saved</p> : null}
 
       <div className="mt-4 grid gap-3">
         <label className="label">
@@ -21,12 +28,13 @@ export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
           <input
             className="input"
             value={next.apiBaseUrl}
-            onChange={(event) =>
+            onChange={(event) => {
+              setSaved(false)
               setNext((prev) => ({
                 ...prev,
                 apiBaseUrl: event.target.value,
               }))
-            }
+            }}
           />
         </label>
 
@@ -36,12 +44,13 @@ export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
             type="password"
             className="input"
             value={next.apiToken}
-            onChange={(event) =>
+            onChange={(event) => {
+              setSaved(false)
               setNext((prev) => ({
                 ...prev,
                 apiToken: event.target.value,
               }))
-            }
+            }}
           />
         </label>
       </div>
@@ -49,7 +58,7 @@ export function SettingsPanel({ settings, onSave }: SettingsPanelProps) {
       <button
         type="button"
         className="btn btn-primary mt-4 px-4 py-2"
-        onClick={() => onSave(next)}
+        onClick={handleSave}
       >
         Save Settings
       </button>
